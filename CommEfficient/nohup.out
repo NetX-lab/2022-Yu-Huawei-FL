@@ -1,0 +1,10 @@
+MY PID: 51952
+Namespace(checkpoint_path='./checkpoint', dataset_dir='/home/yuzhang/CommEfficient/CommEfficient/datasets/persona/', dataset_name='PERSONA', device='cpu', do_batchnorm=False, do_checkpoint=False, do_dp=False, do_finetune=False, do_iid=True, do_test=False, do_topk_down=False, dp_mode='worker', error_type='virtual', eval_before_start=False, fedavg_batch_size=-1, fedavg_lr_decay=1, finetune_path='./finetune', finetuned_from=None, k=1000000, l2_norm_clip=1.0, lm_coef=1.0, local_batch_size=8, local_momentum=0.0, lr_scale=0.04, max_grad_norm=None, max_history=2, mc_coef=1.0, microbatch_size=-1, mode='uncompressed', model='ResNet9', model_checkpoint='gpt2', nan_threshold=999, noise_multiplier=0.0, num_blocks=20, num_candidates=2, num_clients=5, num_cols=10000000, num_devices=2, num_epochs=24, num_fedavg_epochs=1, num_results_train=1, num_results_val=2, num_rows=1, num_workers=5, personality_permutations=1, pivot_epoch=5, port=5315, seed=21, share_ps_gpu=False, train_dataloader_workers=0, use_tensorboard=False, val_dataloader_workers=0, valid_batch_size=8, virtual_momentum=0.9, weight_decay=0.0001)
+Prepare tokenizer, pretrained model and optimizer.
+Finished in 6.65 seconds
+Prepare datasets
+Finished in 0.07 seconds
+Initializing everything
+Killed
+/usr/lib/python3.6/multiprocessing/semaphore_tracker.py:143: UserWarning: semaphore_tracker: There appear to be 6 leaked semaphores to clean up at shutdown
+  len(cache))
