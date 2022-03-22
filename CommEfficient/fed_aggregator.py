@@ -114,7 +114,7 @@ class FedModel:
         # vectors and local velocity vectors
         # transmitted holds what the workers sent to the PS
         shape = None
-        if args.mode == ["sketch", "sketch_randk"]:
+        if args.mode in ["sketch", "sketch_randk"]:
             shape = (num_clients, args.num_rows, args.num_cols)
         elif args.mode in ["local_topk", "true_topk", "fedavg",
                            "uncompressed"]:
@@ -318,7 +318,7 @@ class FedModel:
             if i in queue_idxs:
                 results.extend(r)
 
-        if self.args.mode == ["sketch", "sketch_randk"]:
+        if self.args.mode in ["sketch", "sketch_randk"]:
             shape = (self.args.num_rows, self.args.num_cols)
         elif self.args.mode in ["uncompressed", "true_topk", "local_topk",
                                 "fedavg"]:
@@ -399,7 +399,7 @@ class FedOptimizer(torch.optim.Optimizer):
 
         # create momentum & error sketches -- one or one for each
         # client depending on whether we're doing virtual momentum
-        if args.mode == ["sketch", "sketch_randk"]:
+        if args.mode in ["sketch", "sketch_randk"]:
             shape = (args.num_rows, args.num_cols)
         elif args.mode in ["true_topk", "local_topk", "fedavg",
                            "uncompressed"]:

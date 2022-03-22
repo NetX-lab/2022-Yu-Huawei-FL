@@ -251,6 +251,21 @@ def _topk(vec, k):
         ret[rows, topkIndices] = vec[rows, topkIndices]
     return ret
 
+def _randk(sketch, k):
+    """ Return the randomly-selected k elements of sketch"""
+
+    randkVals = torch.zeros(k, device=sketch.device)
+    randkIndices = torch.zeros(k, device=sketch.device).long()
+    torch.topk(vec**2, k, sorted=False, out=(topkVals, topkIndices))
+
+    ret = torch.zeros_like(vec)
+    if len(vec.size()) == 1:
+        ret[topkIndices] = vec[topkIndices]
+    elif len(vec.size()) == 2:
+        rows = torch.arange(vec.size()[0]).view(-1,1)
+        ret[rows, topkIndices] = vec[rows, topkIndices]
+    return ret
+
 def get_grad(model, args):
     weights = get_param_vec(model)
     grad_vec = get_grad_vec(model)

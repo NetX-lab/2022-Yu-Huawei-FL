@@ -7,13 +7,13 @@ python3 gpt2_train.py \
     --virtual_momentum 0.9 \
     --weight_decay 1e-4 \
     --error_type virtual \
-    --mode sketch \
+    --mode sketch_randk \
     --iid \
     --num_clients 7 \
     --device cpu\
     --num_devices 8 \
     --num_workers 7 \
     --num_results_train 1\
-    --k 500000 \
+    --k 25000 \
     --num_rows 1 \
-    --num_cols 12400000 \
+    --num_cols 1240000 \

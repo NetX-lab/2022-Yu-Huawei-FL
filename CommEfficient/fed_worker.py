@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import ctypes
-from utils import get_param_vec, set_param_vec, get_grad, _topk, clip_grad
+from utils import get_param_vec, set_param_vec, get_grad, _topk, clip_grad, _randk
 import copy
 import os
 import time
@@ -44,7 +44,7 @@ def worker_loop(input_model, ps_weights, client_weights, client_errors,
         if args.mode in ["uncompressed", "true_topk",
                          "local_topk", "fedavg"]:
             shape = (args.grad_size,)
-        elif args.mode == ["sketch", "sketch_randk"]:
+        elif args.mode in ["sketch", "sketch_randk"]:
             shape = (args.num_rows, args.num_cols)
         sum_g = torch.zeros(shape).to(args.device).float()
 
@@ -339,7 +339,10 @@ def forward_grad(model, batch, compute_loss, args, compute_grad=True):
         # gradient clipping
         if compute_grad and args.max_grad_norm is not None:
             sketch = clip_grad(args.max_grad_norm, sketch)
-        g = sketch.table
+        g = torch.zeros((args.num_rows, args.num_cols), device=args.grad_size)
+        selected_index = torch.multinomial(sketch.table, args.k)
+        for i in selected_index:
+            g[0][i] = sketch.table[0][i]
 
 
     return g, results
