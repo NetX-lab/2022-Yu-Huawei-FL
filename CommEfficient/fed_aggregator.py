@@ -294,7 +294,7 @@ class FedModel:
                     "true_topk": self.args.grad_size,
                     "local_topk": self.args.k,
                     "sketch": self.args.num_rows * self.args.num_cols,
-                    "sketch_randk": self.args.num_rows * self.args.num_cols,
+                    "sketch_randk": self.args.num_rows * self.args.k,
                     "fedavg": self.args.grad_size
                 }[self.args.mode] * 4
         upload_bytes[unique_clients] = upload_bytes_participating

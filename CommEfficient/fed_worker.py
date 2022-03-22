@@ -339,10 +339,12 @@ def forward_grad(model, batch, compute_loss, args, compute_grad=True):
         # gradient clipping
         if compute_grad and args.max_grad_norm is not None:
             sketch = clip_grad(args.max_grad_norm, sketch)
-        g = torch.zeros((args.num_rows, args.num_cols), device=args.grad_size)
-        selected_index = torch.multinomial(sketch.table, args.k)
-        for i in selected_index:
-            g[0][i] = sketch.table[0][i]
+        g = torch.zeros((args.num_rows, args.num_cols), device=args.device)
+        selected_index = torch.multinomial(torch.ones((args.num_rows, args.num_cols)), args.k)
+        # g = torch.zeros((1, args.num_rows * args.num_cols), device=args.device)
+        # selected_index = torch.multinomial(sketch.table.reshape(1, -1), args.k)
+        for i in selected_index[0]:
+            g[0, i.item()] = sketch.table[0, i.item()]
 
 
     return g, results
