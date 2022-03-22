@@ -114,7 +114,7 @@ class FedModel:
         # vectors and local velocity vectors
         # transmitted holds what the workers sent to the PS
         shape = None
-        if args.mode == "sketch":
+        if args.mode == ["sketch", "sketch_randk"]:
             shape = (num_clients, args.num_rows, args.num_cols)
         elif args.mode in ["local_topk", "true_topk", "fedavg",
                            "uncompressed"]:
@@ -294,6 +294,7 @@ class FedModel:
                     "true_topk": self.args.grad_size,
                     "local_topk": self.args.k,
                     "sketch": self.args.num_rows * self.args.num_cols,
+                    "sketch_randk": self.args.num_rows * self.args.num_cols,
                     "fedavg": self.args.grad_size
                 }[self.args.mode] * 4
         upload_bytes[unique_clients] = upload_bytes_participating
@@ -317,7 +318,7 @@ class FedModel:
             if i in queue_idxs:
                 results.extend(r)
 
-        if self.args.mode == "sketch":
+        if self.args.mode == ["sketch", "sketch_randk"]:
             shape = (self.args.num_rows, self.args.num_cols)
         elif self.args.mode in ["uncompressed", "true_topk", "local_topk",
                                 "fedavg"]:
@@ -398,7 +399,7 @@ class FedOptimizer(torch.optim.Optimizer):
 
         # create momentum & error sketches -- one or one for each
         # client depending on whether we're doing virtual momentum
-        if args.mode == "sketch":
+        if args.mode == ["sketch", "sketch_randk"]:
             shape = (args.num_rows, args.num_cols)
         elif args.mode in ["true_topk", "local_topk", "fedavg",
                            "uncompressed"]:
@@ -468,6 +469,7 @@ def args2sketch(args):
 
 def get_server_update(gradient, Vvelocity, Verror, args, lr):
     helper = {"sketch": _server_helper_sketched,
+              "sketch_randk": _server_helper_sketched_randk,
               "local_topk": _server_helper_local_topk,
               "true_topk": _server_helper_true_topk,
               "fedavg": _server_helper_fedavg,
@@ -566,6 +568,53 @@ def _server_helper_local_topk(local_topk_grad, Vvelocity, Verror, args, lr):
     return update * lr, Vvelocity, Verror
 
 def _server_helper_sketched(sketched_grad, Vvelocity, Verror, args, lr):
+    rho = args.virtual_momentum
+    k = args.k
+
+    # must do the same type of momentum as error accumulation
+    if args.error_type == "local":
+        assert args.virtual_momentum == 0
+    elif args.error_type == "virtual":
+        assert args.local_momentum == 0
+
+    torch.add(sketched_grad, Vvelocity, alpha=rho, out=Vvelocity)
+    if args.error_type == "local":
+        Verror = Vvelocity
+    elif args.error_type == "virtual":
+        Verror += Vvelocity
+
+    sketch = args2sketch(args)
+    sketch.accumulateTable(Verror)
+    #noise = torch.normal(mean=0, std=args.noise_multiplier, size=[args.grad_size]).to(args.device)
+    #sketch.accumulateVec(noise)
+    #noise = torch.normal(mean=0, std=args.noise_multiplier, size=[args.rows, args.cols]).to(args.device)
+    #sketch.accumulateTable(noise)
+    update = sketch.unSketch(k=args.k)
+
+    # do virtual error
+    sketch.zero()
+    sketch.accumulateVec(update)
+    sketched_update = sketch.table
+    if args.error_type == "virtual":
+        # this should work but doesn't (model diverges)
+        #Verror -= sketched_update
+        # instead, zero out Verror with sketched_update.nonzero()
+        nz = sketched_update.nonzero()
+        Verror[nz[:,0],nz[:,1]] = 0
+
+    # momentum factor masking is annoying for sketched
+    # to do it properly, we'd have to:
+    # first, pull out the values of momentums where update is nonzero
+    # then, sketch those values, and subtract them from momentums
+    # this requires an unsketch of all num_workers momentum sketch,
+    # which is expensive. So instead, just zero out the momentum sketch
+    # anywhere where update is nonzero
+    nz = sketched_update.nonzero()
+    Vvelocity[nz[:,0], nz[:,1]] = 0
+
+    return update * lr, Vvelocity, Verror
+
+def _server_helper_sketched_randk(sketched_grad, Vvelocity, Verror, args, lr):
     rho = args.virtual_momentum
     k = args.k
 
